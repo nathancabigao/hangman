@@ -38,6 +38,7 @@ class Game
 
   def display_turn
     puts "\n#{key.join(' ')}"
+    puts "Incorrect letters: #{incorrect_letters.join(' ')}"
     puts "Remaining guesses: #{remaining_guesses}"
   end
 
