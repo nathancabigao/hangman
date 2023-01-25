@@ -3,6 +3,7 @@
 # Static variables
 MIN_CHARS = 5
 MAX_CHARS = 12
+MAX_INCORRECT = 6
 
 # Class to run an instance of a hangman game.
 class Game
@@ -11,7 +12,7 @@ class Game
   def initialize
     @word = random_word
     @key = Array.new(@word.size, '_')
-    @remaining_guesses = 6
+    @remaining_guesses = MAX_INCORRECT
     @guessed_letters = []
     @incorrect_letters = []
     play
@@ -33,7 +34,8 @@ class Game
       guess = player_guess
       check_guess(guess)
     end
-    puts "Game over. The word was #{@word}!"
+    puts "\nGame over. The word was #{@word}!"
+    puts "You won with #{MAX_INCORRECT - remaining_guesses} incorrect guesses!" unless key.include?('_')
   end
 
   def display_turn
