@@ -54,16 +54,13 @@ class Game
   end
 
   def load_game
-    # Guard clause, if there are no saves, just start a new game
     unless File.exist?('./save') && Dir.glob('./save/*').length.positive?
       puts "No saves found. Starting new game...\n"
       return
     end
-    # List all saves
     saves = Dir.children('save')
     puts "\nSave files"
     saves.each_with_index { |save_name, index| puts "#{index + 1}: #{save_name}" }
-    # Ask user for save
     choice = load_game_choice(saves)
     from_json("./save/#{saves[choice - 1]}")
   end
@@ -79,7 +76,6 @@ class Game
     choice
   end
 
-  # Reads from the dictionary file, and returns a random eligible word
   def random_word
     words = []
     dictionary = File.open('google-10000-english-no-swears.txt', 'r')
@@ -106,7 +102,6 @@ class Game
     puts "\nTo save the game, type 'save'."
   end
 
-  # Prompt the user to guess a letter, and returns the letter given.
   def player_guess
     valid = false
     until valid
@@ -119,7 +114,6 @@ class Game
     guess
   end
 
-  # Returns whether a guess was valid or not, along with an error message if needed.
   def validate_guess(guess)
     if guess == 'save'
       save_game
@@ -132,15 +126,11 @@ class Game
     end
   end
 
-  # Checks if the player's guess was in the word, and updates the key if it was.
-  # Also changes the number of remaining guesses if the guess was incorrect.
   def check_guess(guess)
     guessed_letters << guess
-    # if the guess contains the word, update the key with that letter.
     if @word.include?(guess)
       indices = (0..@word.length).find_all { |index| @word[index] == guess }
       indices.each { |index| @key[index] = guess }
-    # Otherwise, add that guess to the incorrect letters, and change guess count.
     else
       incorrect_letters << guess
       @remaining_guesses -= 1
