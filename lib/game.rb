@@ -1,5 +1,8 @@
 # frozen-string-literal: true
 
+# Libraries
+require 'json'
+
 # Static variables
 MIN_CHARS = 5
 MAX_CHARS = 12
@@ -15,7 +18,65 @@ class Game
     @remaining_guesses = MAX_INCORRECT
     @guessed_letters = []
     @incorrect_letters = []
-    play
+  end
+
+  def save_game
+    print 'Enter save file name: '
+    valid = false
+    until valid
+      save_name = gets.chomp
+      Dir.mkdir('save') unless File.exist?('save')
+      next if File.exist?("save/#{save_name}")
+
+      File.open("./save/#{save_name}.json", 'w') { |f| f.write(to_json) }
+      exit
+    end
+  end
+
+  def to_json(*_args)
+    JSON.dump({
+                word: @word,
+                key: @key,
+                remaining_guesses: @remaining_guesses,
+                guessed_letters: @guessed_letters,
+                incorrect_letters: @incorrect_letters
+              })
+  end
+
+  def from_json(save)
+    data = JSON.parse(File.read(save))
+    @word = data['word']
+    @key = data['key']
+    @remaining_guesses = data['remaining_guesses']
+    @guessed_letters = data['guessed_letters']
+    @incorrect_letters = data['incorrect_letters']
+    File.delete(save)
+  end
+
+  def load_game
+    # Guard clause, if there are no saves, just start a new game
+    unless File.exist?('./save') && Dir.glob('./save/*').length.positive?
+      puts "No saves found. Starting new game...\n"
+      return
+    end
+    # List all saves
+    saves = Dir.children('save')
+    puts "\nSave files"
+    saves.each_with_index { |save_name, index| puts "#{index + 1}: #{save_name}" }
+    # Ask user for save
+    choice = load_game_choice(saves)
+    from_json("./save/#{saves[choice - 1]}")
+  end
+
+  def load_game_choice(saves)
+    valid = false
+    until valid
+      print "\nPlease enter the number of the save file you want to load: "
+      choice = gets.to_i
+      valid = true if choice.between?(1, saves.length)
+      puts 'Invalid input. Please choose a valid save number.' unless valid
+    end
+    choice
   end
 
   # Reads from the dictionary file, and returns a random eligible word
@@ -28,7 +89,7 @@ class Game
   end
 
   def play
-    puts "The word is #{@word.length} letters long. Good luck!"
+    puts "\nThe word is #{@word.length} letters long. Good luck!"
     while key.include?('_') && remaining_guesses.positive?
       display_turn
       guess = player_guess
@@ -42,6 +103,7 @@ class Game
     puts "\n#{key.join(' ')}"
     puts "Incorrect letters: #{incorrect_letters.join(' ')}"
     puts "Remaining guesses: #{remaining_guesses}"
+    puts "\nTo save the game, type 'save'."
   end
 
   # Prompt the user to guess a letter, and returns the letter given.
@@ -59,7 +121,9 @@ class Game
 
   # Returns whether a guess was valid or not, along with an error message if needed.
   def validate_guess(guess)
-    if guess.length > 1 || !guess.match(/[a-zA-Z]/)
+    if guess == 'save'
+      save_game
+    elsif guess.length > 1 || !guess.match(/[a-zA-Z]/)
       [false, 'Your guess should only be one letter. Please try again.']
     elsif guessed_letters.include?(guess)
       [false, 'You guessed a letter that has already been guessed. Try again']
